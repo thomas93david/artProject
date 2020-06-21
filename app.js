@@ -16,6 +16,7 @@ async function fetchObjects() {
 }
 fetchObjects().then((x) => console.log(x));
 fetchObjects();
+
 async function fetchAllCenturies() {
   const url = `${BASE_URL}/century?${KEY}&size=100&sort=temporalorder`;
   if (localStorage.getItem("centuries")) {
@@ -52,60 +53,6 @@ async function prefetchCategoryLists() {
     ]);
     console.log(centuries);
     console.log(classifications);
-    $(".classification-count").text(`(${classifications.length})`);
-    classifications.forEach((classification) => {
-      $("#select-classification").append(
-        $(
-          `<option value="${classification.name}">${classification.name}</option>`
-        )
-      );
-    });
-    $(".century-count").text(`(${centuries.length})`);
-    centuries.forEach((century) => {
-      $("#select-century").append(
-        $(`<option value="${century.name}">${century.name}</option>`)
-      );
-    });
-  } catch (error) {
-    console.error(error);
-  }
-}
-prefetchCategoryLists();
-
-async function fetchAllCenturies() {
-  if (localStorage.getItem("centuries")) {
-    return JSON.parse(localStorage.getItem("centuries"));
-  }
-  try {
-    const response = await fetch(
-      `${BASE_URL}?${KEY}&size=100&sort=temporalorder`
-    );
-    const { info, records } = await response.json();
-    localStorage.setItem("centuries", JSON.stringify(records));
-    return records;
-  } catch (error) {
-    console.error(error);
-  }
-}
-async function fetchAllClassifications() {
-  if (localStorage.getItem("classifications")) {
-    return JSON.parse(localStorage.getItem("classifications"));
-  }
-  try {
-    const response = await fetch(`${BASE_URL}?${KEY}&size=100&sort=name`);
-    const { info, records } = await response.json();
-    localStorage.setItem("classifications", JSON.stringify(records));
-    return records;
-  } catch (error) {
-    console.error(error);
-  }
-}
-async function prefetchCategoryLists() {
-  try {
-    const [classifications, centuries] = await Promise.all([
-      fetchAllClassifications(),
-      fetchAllCenturies(),
-    ]);
     $(".classification-count").text(`(${classifications.length})`);
     classifications.forEach((classification) => {
       $("#select-classification").append(
