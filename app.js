@@ -16,67 +16,43 @@ async function fetchObjects() {
 }
 fetchObjects().then((x) => console.log(x));
 fetchObjects();
-
 async function fetchAllCenturies() {
-  onFetchStart();
-  onFetchEnd();
-  const century_URL = `${BASE_URL}/century?${KEY}&size=100&sort=temporalorder`;
-  // "https://api.harvardartmuseums.org/century?apikey=89643ce0-b0ad-11ea-b9ba-79f51ab17128&size=100&sort=temporalorder"; ss and gs
-  let sideBar = localStorage.getItem("centuries");
-  if (typeof sideBar !== "undefined" && sideBar !== null) {
-    if (sideBar) {
-      return JSON.parse(localStorage.getItem("centuries"));
-    }
-  } else {
-    localStorage.clear();
+  const url = `${BASE_URL}/century?${KEY}&size=100&sort=temporalorder`;
+  if (localStorage.getItem("centuries")) {
+    return JSON.parse(localStorage.getItem("centuries"));
   }
   try {
-    const response = await fetch(century_URL);
+    const response = await fetch(url);
     const { records } = await response.json();
-    localStorage.setItem("centuries", JSON.stringify({ records }));
-    return { records };
-    // localStorage.setItem("centuries");
-    // return { records };
+    localStorage.setItem("centuries", JSON.stringify(records));
+    return records;
   } catch (error) {
     console.error(error);
   }
 }
-
-fetchAllCenturies();
-
 async function fetchAllClassifications() {
-  onFetchStart();
-  onFetchEnd();
-  let sideBar = localStorage.getItem("classifications");
-  if (typeof sideBar !== "undefined" && sideBar !== null) {
-    if (sideBar) {
-      return JSON.parse(localStorage.getItem("classifications"));
-    }
-  } else {
-    localStorage.clear();
+  const url = `${BASE_URL}/classification?${KEY}&size=100&sort=name`;
+  if (localStorage.getItem("classifications")) {
+    return JSON.parse(localStorage.getItem("classifications"));
   }
-  const classifications_URL = `${BASE_URL}/classification?${KEY}&size=100&sort=name`;
-
   try {
-    const response = await fetch(classifications_URL);
+    const response = await fetch(url);
     const { records } = await response.json();
-    localStorage.setItem("classifications", JSON.stringify({ records }));
-    return { records };
+    localStorage.setItem("centuries", JSON.stringify(records));
+    return records;
   } catch (error) {
     console.error(error);
   }
 }
-fetchAllClassifications();
-
 async function prefetchCategoryLists() {
   try {
     const [classifications, centuries] = await Promise.all([
       fetchAllClassifications(),
       fetchAllCenturies(),
     ]);
+    console.log(centuries);
+    console.log(classifications);
     $(".classification-count").text(`(${classifications.length})`);
-    console.log("Below me");
-
     classifications.forEach((classification) => {
       $("#select-classification").append(
         $(
@@ -94,7 +70,60 @@ async function prefetchCategoryLists() {
     console.error(error);
   }
 }
+prefetchCategoryLists();
 
+async function fetchAllCenturies() {
+  if (localStorage.getItem("centuries")) {
+    return JSON.parse(localStorage.getItem("centuries"));
+  }
+  try {
+    const response = await fetch(
+      `${BASE_URL}?${KEY}&size=100&sort=temporalorder`
+    );
+    const { info, records } = await response.json();
+    localStorage.setItem("centuries", JSON.stringify(records));
+    return records;
+  } catch (error) {
+    console.error(error);
+  }
+}
+async function fetchAllClassifications() {
+  if (localStorage.getItem("classifications")) {
+    return JSON.parse(localStorage.getItem("classifications"));
+  }
+  try {
+    const response = await fetch(`${BASE_URL}?${KEY}&size=100&sort=name`);
+    const { info, records } = await response.json();
+    localStorage.setItem("classifications", JSON.stringify(records));
+    return records;
+  } catch (error) {
+    console.error(error);
+  }
+}
+async function prefetchCategoryLists() {
+  try {
+    const [classifications, centuries] = await Promise.all([
+      fetchAllClassifications(),
+      fetchAllCenturies(),
+    ]);
+    $(".classification-count").text(`(${classifications.length})`);
+    classifications.forEach((classification) => {
+      $("#select-classification").append(
+        $(
+          `<option value="${classification.name}">${classification.name}</option>`
+        )
+      );
+    });
+    $(".century-count").text(`(${centuries.length})`);
+    centuries.forEach((century) => {
+      $("#select-century").append(
+        $(`<option value="${century.name}">${century.name}</option>`)
+      );
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
 prefetchCategoryLists();
 
 function buildSearchString() {
@@ -144,9 +173,21 @@ function renderPreview(record) {
 
 function updatePreview(records) {
   const root = $("#preview");
-  $(".results").empty();
+  const rootSearch = root.find(".results");
+  if (info.next) {
+    root.find(".next").data("url", info.next).attr("disabled", false);
+  } else {
+    root.find(".next").data("url", null).attr("disabled", true);
+  }
+  if (info.prev) {
+    root.find(".previous").data("url", info.previous).attr("disabled", false);
+  } else {
+    root.find(".previous").data("url", null).attr("disabled", true);
+  }
+  rootSearch.empty();
   records.forEach(function (records) {
-    $(".results").append(renderPreview(records));
+    rootSearch.append(renderPreview(records));
   });
+
+  updatePreview();
 }
-updatePreview();
